@@ -1,0 +1,12 @@
+Describe ConcurrentProcess
+  Before all
+    let CP = vital#of('vital').import('ConcurrentProcess')
+  End
+
+  Describe .of()
+    It doesn't work yet due to vimproc#popen3...
+      let cp = CP.of('cat -n', '/tmp', [])
+      Assert Equals(cp, {})
+    End
+  End
+End
