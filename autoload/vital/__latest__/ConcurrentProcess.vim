@@ -76,7 +76,7 @@ function! s:tick(label) abort
       let rname = pi.queries[0][1]
       let rtil = pi.queries[0][2]
 
-      let [out, err] = [pi.vp.stdout.read(), pi.vp.stderr.read()]
+      let [out, err] = [pi.vp.stdout.read(-1, 0), pi.vp.stderr.read(-1, 0)]
       call add(pi.logs, ['', out, err])
 
       " stdout: store into vars and buffer_out
@@ -141,13 +141,20 @@ function! s:queue(label, queries) abort
   let s:_process_info[a:label].queries += a:queries
 endfunction
 
+function! s:is_busy(label) abort
+  return len(s:_process_info[a:label].queries) > 0
+endfunction
+
+function! s:shutdown(label) abort
+  let pi = s:_process_info[a:label]
+  call pi.vp.kill(g:vimproc#SIGKILL)
+  call pi.vp.checkpid()
+  unlet s:_process_info[a:label]
+endfunction
+
 " Just to wipe out the log
 function! s:log_clear(label) abort
   let s:_process_info[a:label].logs = []
-endfunction
-
-function! s:is_busy(label) abort
-  return len(s:_process_info[a:label].queries) > 0
 endfunction
 
 " Print out log, and wipe out the log
