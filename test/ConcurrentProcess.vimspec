@@ -1,12 +1,62 @@
-Describe ConcurrentProcess
-  Before all
-    let CP = vital#of('vital').import('ConcurrentProcess')
-  End
+scriptencoding utf-8
 
-  Describe .of()
-    It doesn't work yet due to vimproc#popen3...
-      let cp = CP.of('cat -n', '/tmp', [])
-      Assert Equals(cp, {})
-    End
-  End
-End
+let s:suite = themis#suite('Data.String')
+let s:assert = themis#helper('assert')
+
+function! s:suite.before()
+  let s:CP = vital#of('vital').import('ConcurrentProcess')
+
+  " Check if user has `cat` executable command
+endfunction
+
+function! s:suite.after()
+  unlet! s:CP
+endfunction
+
+function! s:suite.of()
+  " Well, this also has tick() and log_dump()
+  " This may depend on performance of computer as well
+  let label = s:CP.of('cat -n', '/tmp', [
+        \ ['*writeln*', 'hello'],
+        \ ['*read*', 'x', '']])
+  call s:assert.is_string(label)
+
+  call s:CP.tick(label)
+  redir => output
+    silent call s:CP.log_dump(label)
+  redir END
+  call s:assert.match(output, '1\s\+hello')
+endfunction
+
+function! s:suite.takeout()
+  " Well, this also has of(), and tick()
+  " This may depend on performance of computer as well
+  let label = s:CP.of('cat -n', '/tmp', [
+        \ ['*writeln*', 'hello'],
+        \ ['*read*', 'x', ''],
+        \ ['*writeln*', 'world'],
+        \ ['*read*', 'y', '']])
+
+  call s:CP.tick(label)
+
+  let [outx, errx] = s:CP.takeout(label, 'x')
+  let [outy, erry] = s:CP.takeout(label, 'y')
+
+  call s:assert.match(outx, '1\s\+hello')
+  call s:assert.not_match(outx, '2\s\+world')
+
+  call s:assert.not_match(outy, '1\s\+hello')
+  call s:assert.match(outy, '2\s\+world')
+
+  call s:assert.equals(errx, '')
+  call s:assert.equals(erry, '')
+
+  " 2nd time is different.
+  let [out, err] = s:CP.takeout(label, 'x')
+  call s:assert.equals(out, '')
+  call s:assert.equals(err, '')
+
+  let [out, err] = s:CP.takeout(label, 'y')
+  call s:assert.equals(out, '')
+  call s:assert.equals(err, '')
+endfunction
