@@ -114,7 +114,7 @@ function! s:tick(label) abort
       call s:tick(a:label)
     else
       " must not happen
-      throw printf("ConcurrentProcess: must not happen")
+      throw "ConcurrentProcess: must not happen"
     endif
   endif
 endfunction
@@ -144,6 +144,10 @@ endfunction
 " Just to wipe out the log
 function! s:log_clear(label) abort
   let s:_process_info[a:label].logs = []
+endfunction
+
+function! s:is_busy(label) abort
+  return len(s:_process_info[a:label].queries) > 0
 endfunction
 
 " Print out log, and wipe out the log
