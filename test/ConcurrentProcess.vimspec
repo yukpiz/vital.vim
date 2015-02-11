@@ -28,7 +28,7 @@ function! s:suite.of()
   call s:assert.match(output, '1\s\+hello')
 endfunction
 
-function! s:suite.takeout()
+function! s:suite.consume()
   " Well, this also has of(), and tick()
   " This may depend on performance of computer as well
   let label = s:CP.of('cat -n', '/tmp', [
@@ -39,8 +39,8 @@ function! s:suite.takeout()
 
   call s:CP.tick(label)
 
-  let [outx, errx] = s:CP.takeout(label, 'x')
-  let [outy, erry] = s:CP.takeout(label, 'y')
+  let [outx, errx] = s:CP.consume(label, 'x')
+  let [outy, erry] = s:CP.consume(label, 'y')
 
   call s:assert.match(outx, '1\s\+hello')
   call s:assert.not_match(outx, '2\s\+world')
@@ -52,11 +52,28 @@ function! s:suite.takeout()
   call s:assert.equals(erry, '')
 
   " 2nd time is different.
-  let [out, err] = s:CP.takeout(label, 'x')
+  let [out, err] = s:CP.consume(label, 'x')
   call s:assert.equals(out, '')
   call s:assert.equals(err, '')
 
-  let [out, err] = s:CP.takeout(label, 'y')
+  let [out, err] = s:CP.consume(label, 'y')
   call s:assert.equals(out, '')
   call s:assert.equals(err, '')
+endfunction
+
+function! s:suite.consume_all_blocking()
+  let label = s:CP.of('sh -c "sleep 2; echo -n done; sleep 2"', '/tmp', [
+        \ ['*read*', 'x', 'done']])
+
+  call s:assert.false(s:CP.is_done(label, 'x'))
+
+  " with very little timeout value
+  let [out, err, timedout_p] = s:CP.consume_all_blocking(label, 'x', 1)
+  call s:assert.true(timedout_p)
+  call s:assert.false(s:CP.is_done(label, 'x'))
+
+  " with enough timeout value
+  let [out, err, timedout_p] = s:CP.consume_all_blocking(label, 'x', 10)
+  call s:assert.false(timedout_p)
+  call s:assert.true(s:CP.is_done(label, 'x'))
 endfunction
