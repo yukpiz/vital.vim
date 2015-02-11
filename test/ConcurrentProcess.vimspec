@@ -77,3 +77,12 @@ function! s:suite.consume_all_blocking()
   call s:assert.false(timedout_p)
   call s:assert.true(s:CP.is_done(label, 'x'))
 endfunction
+
+function! s:suite.read_all()
+  let label = s:CP.of('sh -c "sleep 1; echo done"', '', [
+        \ ['*read-all*', 'x']])
+
+  let [out, err, timedout_p] = s:CP.consume_all_blocking(label, 'x', 10)
+  call s:assert.equals(out, "done\n")
+  call s:assert.false(timedout_p)
+endfunction

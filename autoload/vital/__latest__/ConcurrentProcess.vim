@@ -72,6 +72,26 @@ function! s:_split_at_last_newline(str) abort
   endif
 endfunction
 
+function! s:_read(label, pi, rname)
+  let pi = a:pi
+
+  let [out, err] = [pi.vp.stdout.read(-1, 0), pi.vp.stderr.read(-1, 0)]
+  call add(pi.logs, ['', out, err])
+
+  " stdout: store into vars and buffer_out
+  if !has_key(pi.vars, a:rname)
+    let pi.vars[a:rname] = ['', '']
+  endif
+  let [left, right] = s:_split_at_last_newline(pi.buffer_out . out)
+  if a:rname !=# '_'
+    let pi.vars[a:rname][0] .= left
+  endif
+  let pi.buffer_out = right
+
+  " stderr: directly store into buffer_err
+  let pi.buffer_err .= err
+endfunction
+
 function! s:tick(label) abort
   let pi = s:_process_info[a:label]
 
@@ -87,22 +107,10 @@ function! s:tick(label) abort
     let rname = pi.queries[0][1]
     let rtil = pi.queries[0][2]
 
-    let [out, err] = [pi.vp.stdout.read(-1, 0), pi.vp.stderr.read(-1, 0)]
-    call add(pi.logs, ['', out, err])
-
-    " stdout: store into vars and buffer_out
-    if !has_key(pi.vars, rname)
-      let pi.vars[rname] = ['', '']
-    endif
-    let [left, right] = s:_split_at_last_newline(pi.buffer_out . out)
-    let pi.vars[rname][0] .= left
-    let pi.buffer_out = right
-
-    " stderr: directly store into buffer_err
-    let pi.buffer_err .= err
+    call s:_read(a:label, pi, rname)
 
     let pattern = "\\(^\\|\n\\)" . rtil . '$'
-    " wait ended.
+    " when wait ended:
     if pi.buffer_out =~ pattern
       if rname !=# '_'
         let pi.vars[rname][0] .= s:S.substitute_last(pi.buffer_out, pattern, '')
@@ -115,6 +123,22 @@ function! s:tick(label) abort
 
       call s:tick(a:label)
     endif
+  elseif qlabel ==# '*read-all*'
+    let rname = pi.queries[0][1]
+    call s:_read(a:label, pi, rname)
+
+    " when wait ended:
+    if get(s:_process_info[a:label].vp.checkpid(), 0, '') !=# 'run'
+      if rname !=# '_'
+        let pi.vars[rname][0] .= pi.buffer_out
+        let pi.vars[rname][1] = pi.buffer_err
+      endif
+
+      call remove(pi.queries, 0)
+      let pi.buffer_out = ''
+      let pi.buffer_err = ''
+    endif
+
   elseif qlabel ==# '*writeln*'
     let wbody = pi.queries[0][1]
     call pi.vp.stdin.write(wbody . "\n")
