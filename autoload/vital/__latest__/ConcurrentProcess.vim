@@ -38,12 +38,16 @@ function! s:of(command, dir, initial_queries) abort
   endif
 
   if !has_key(s:_process_info, label)
-    let cwd = getcwd()
-    execute 'chdir' a:dir
+    if len(a:dir)
+      let cwd = getcwd()
+      execute 'lcd' a:dir
+    endif
     try
       let vp = vimproc#popen3(a:command)
     finally
-      execute 'chdir' cwd
+      if len(a:dir)
+        execute 'lcd' cwd
+      endif
     endtry
 
     let s:_process_info[label] = {
