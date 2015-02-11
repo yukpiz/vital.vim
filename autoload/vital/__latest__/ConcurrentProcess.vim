@@ -51,6 +51,7 @@ function! s:of(command, dir, initial_queries) abort
           \ 'buffer_out': '', 'buffer_err': '', 'vars': {}}
   endif
 
+  call s:tick(label)
   return label
 endfunction
 
@@ -69,9 +70,12 @@ endfunction
 
 function! s:tick(label) abort
   let pi = s:_process_info[a:label]
+
   if len(pi.queries) == 0
     return
   endif
+
+  let is_alive = get(pi.vp.checkpid(), 0, '') ==# 'run'
 
   let qlabel = pi.queries[0][0]
 
@@ -122,6 +126,10 @@ function! s:tick(label) abort
 endfunction
 
 function! s:takeout(label, varname) abort
+  return s:consume(a:label, a:varname)
+endfunction
+
+function! s:consume(label, varname) abort
   let pi = s:_process_info[a:label]
 
   if has_key(pi.vars, a:varname)
@@ -134,6 +142,8 @@ function! s:takeout(label, varname) abort
 endfunction
 
 function! s:is_done(label, rname) abort
+  call s:tick(a:label)
+
   return s:L.all(
         \ printf('v:val[0] ==# "*read*" && v:val[1] !=# %s', string(a:rname)),
         \ s:_process_info[a:label].queries)
@@ -144,6 +154,8 @@ function! s:queue(label, queries) abort
 endfunction
 
 function! s:is_busy(label) abort
+  call s:tick(a:label)
+
   return len(s:_process_info[a:label].queries) > 0
 endfunction
 

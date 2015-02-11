@@ -1,6 +1,6 @@
 scriptencoding utf-8
 
-let s:suite = themis#suite('Data.String')
+let s:suite = themis#suite('ConcurrentProcess')
 let s:assert = themis#helper('assert')
 
 function! s:suite.before()
