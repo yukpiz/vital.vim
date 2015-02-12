@@ -79,6 +79,7 @@ function! s:suite.consume_all_blocking()
 endfunction
 
 function! s:suite.read_all()
+  " system() pattern -- execute something and get everything.
   let label = s:CP.of('sh -c "sleep 1; echo done"', '', [
         \ ['*read-all*', 'x']])
 

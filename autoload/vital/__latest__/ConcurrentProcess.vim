@@ -28,7 +28,11 @@ endfunction
 " * Failed to spawn the process: exception
 " * The process has been dead: start from scratch silently
 function! s:of(command, dir, initial_queries) abort
-  let label = sha256(printf('%s--%s--%s', a:command, a:dir, join(a:initial_queries, ';')))
+  let label = sha256(printf(
+        \ '%s--%s--%s',
+        \ type(a:command) == type('') ? a:command : join(a:command, ' '),
+        \ a:dir,
+        \ join(a:initial_queries, ';')))
 
   " Reset if the process is dead
   if has_key(s:_process_info, label)
@@ -166,6 +170,7 @@ function! s:consume_all_blocking(label, varname, timeout_sec) abort
 endfunction
 
 function! s:consume(label, varname) abort
+  call s:tick(a:label)
   let pi = s:_process_info[a:label]
 
   if has_key(pi.vars, a:varname)
