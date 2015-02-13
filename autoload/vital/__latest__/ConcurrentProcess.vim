@@ -28,7 +28,7 @@ endfunction
 " * Failed to spawn the process: exception
 " * The process has been dead: start from scratch silently
 function! s:of(command, dir, initial_queries) abort
-  let label = sha256(printf(
+  let label = s:S.hash(printf(
         \ '%s--%s--%s',
         \ type(a:command) == type('') ? a:command : join(a:command, ' '),
         \ a:dir,
