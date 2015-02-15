@@ -28,6 +28,17 @@ function! s:suite.of()
   call s:assert.match(output, '1\s\+hello')
 endfunction
 
+function! s:suite.of_with_failure()
+  try
+    call s:CP.of('this-command-does-not-exist', '', [])
+    call s:assert.fail('of')
+  catch /File "this-command-does-not-exist" is not found/
+    call s:assert.true(1)
+    return
+  endtry
+  call s:assert.fail('of')
+endfunction
+
 function! s:suite.consume()
   " Well, this also has of(), and tick()
   " This may depend on performance of computer as well

@@ -10,10 +10,9 @@ set cpo&vim
 let s:_process_info = {}
 
 function! s:_vital_loaded(V) abort
-  let s:V = a:V
-  let s:L = s:V.import('Data.List')
-  let s:S = s:V.import('Data.String')
-  let s:P = s:V.import('Process')
+  let s:L = a:V.import('Data.List')
+  let s:S = a:V.import('Data.String')
+  let s:P = a:V.import('Process')
 endfunction
 
 function! s:_vital_depends() abort
