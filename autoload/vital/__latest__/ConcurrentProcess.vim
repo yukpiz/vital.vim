@@ -185,7 +185,7 @@ function! s:is_done(label, rname) abort
   call s:tick(a:label)
 
   return s:L.all(
-        \ printf('v:val[0] ==# "*read*" && v:val[1] !=# %s', string(a:rname)),
+        \ printf('(v:val[0] ==# "*read*" || v:val[0] ==# "*read-all*") && v:val[1] !=# %s', string(a:rname)),
         \ s:_process_info[a:label].queries)
 endfunction
 
